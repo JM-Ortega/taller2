@@ -6,6 +6,7 @@ import co.edu.unicauca.saberpro.pregunta.application.port.out.IntegrationEventPu
 import co.edu.unicauca.saberpro.pregunta.domain.event.PreguntaEnviadaARevision;
 import co.edu.unicauca.saberpro.pregunta.domain.model.Pregunta;
 import co.edu.unicauca.saberpro.pregunta.domain.repository.PreguntaRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -21,6 +22,7 @@ public class EnviarPreguntaARevisionService implements EnviarPreguntaARevisionUs
     }
 
     @Override
+    @Transactional
     public Pregunta enviarARevision(UUID preguntaId) {
         Pregunta pregunta = repository.buscarPorId(preguntaId)
             .orElseThrow(() -> new PreguntaNoEncontradaException(preguntaId));
