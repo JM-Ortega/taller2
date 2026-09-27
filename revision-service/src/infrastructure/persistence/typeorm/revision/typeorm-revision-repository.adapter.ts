@@ -6,15 +6,48 @@ import { RevisionPersistenceMapper } from './revision-persistence.mapper';
 import { RevisionRevisorOrmEntity } from './revision-revisor.orm-entity';
 import { RevisionOrmEntity } from './revision.orm-entity';
 
+type EjecutorDeTransaccion = <T>(work: (manager: EntityManager) => Promise<T>) => Promise<T>;
+
 export class TypeOrmRevisionRepositoryAdapter implements RevisionRepository {
-  constructor(
-    private readonly dataSource: DataSource,
+  private constructor(
     private readonly mapper: RevisionPersistenceMapper,
+    private readonly obtenerManager: () => EntityManager,
+    private readonly ejecutarPersistencia: EjecutorDeTransaccion,
+    private readonly bloquearRaizAlBuscarPorId: boolean,
   ) {}
 
+  static standalone(
+    dataSource: DataSource,
+    mapper: RevisionPersistenceMapper,
+  ): TypeOrmRevisionRepositoryAdapter {
+    return new TypeOrmRevisionRepositoryAdapter(
+      mapper,
+      () => dataSource.manager,
+      (work) => dataSource.transaction(work),
+      false,
+    );
+  }
+
+  static ligadoATransaccion(
+    manager: EntityManager,
+    mapper: RevisionPersistenceMapper,
+  ): TypeOrmRevisionRepositoryAdapter {
+    return new TypeOrmRevisionRepositoryAdapter(
+      mapper,
+      () => manager,
+      (work) => work(manager),
+      true,
+    );
+  }
+
   async findById(revisionId: string): Promise<Revision | null> {
-    const manager = this.dataSource.manager;
-    const root = await manager.findOne(RevisionOrmEntity, { where: { revisionId } });
+    const manager = this.obtenerManager();
+    const root = this.bloquearRaizAlBuscarPorId
+      ? await manager.findOne(RevisionOrmEntity, {
+          where: { revisionId },
+          lock: { mode: 'pessimistic_write' },
+        })
+      : await manager.findOne(RevisionOrmEntity, { where: { revisionId } });
     if (root === null) {
       return null;
     }
@@ -24,7 +57,7 @@ export class TypeOrmRevisionRepositoryAdapter implements RevisionRepository {
   }
 
   async findByPreguntaId(preguntaId: string): Promise<readonly Revision[]> {
-    const manager = this.dataSource.manager;
+    const manager = this.obtenerManager();
     const raices = await manager.find(RevisionOrmEntity, { where: { preguntaId } });
 
     const revisiones: Revision[] = [];
@@ -36,7 +69,7 @@ export class TypeOrmRevisionRepositoryAdapter implements RevisionRepository {
   }
 
   async save(revision: Revision): Promise<void> {
-    await this.dataSource.transaction(async (manager) => {
+    await this.ejecutarPersistencia(async (manager) => {
       const revisionId = revision.getRevisionId();
 
       await manager.delete(RevisionEvaluacionOrmEntity, { revisionId });

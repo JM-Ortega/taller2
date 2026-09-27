@@ -60,14 +60,14 @@ class FakeDataSource {
 
 function crearAdapter(manager: FakeEntityManager, transactionalManager = new FakeEntityManager()) {
   const dataSource = new FakeDataSource(manager, transactionalManager);
-  const adapter = new TypeOrmRevisionRepositoryAdapter(
+  const adapter = TypeOrmRevisionRepositoryAdapter.standalone(
     dataSource as unknown as DataSource,
     new RevisionPersistenceMapper(),
   );
   return { adapter, dataSource };
 }
 
-describe('TypeOrmRevisionRepositoryAdapter', () => {
+describe('TypeOrmRevisionRepositoryAdapter.standalone', () => {
   const mapper = new RevisionPersistenceMapper();
 
   it('findById retorna null cuando la raíz no existe', async () => {
