@@ -1,0 +1,79 @@
+<mxfile host="Electron">
+  <diagram name="Arquitectura Taller 2" id="arq-taller2">
+    <mxGraphModel dx="1230" dy="773" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1240" pageHeight="760" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;fontStyle=1;fontColor=#222222;" value="Arquitectura de Microservicios — Banco de Preguntas Saber Pro" vertex="1">
+          <mxGeometry height="24" width="600" x="300" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontStyle=2;fontColor=#666666;" value="Taller 2 — Pregunta y Revisión" vertex="1">
+          <mxGeometry height="18" width="600" x="300" y="24" as="geometry" />
+        </mxCell>
+        <mxCell id="boundary1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;dashPattern=6 4;fillColor=none;strokeColor=#666666;fontColor=#666666;fontStyle=2;fontSize=12;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;" value="Banco de Preguntas Saber Pro — Taller 2 [Sistema]" vertex="1">
+          <mxGeometry height="391" width="1130" x="29" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="person1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#052E56;fontColor=#FFFFFF;arcSize=12;" value="&lt;b&gt;Cliente externo&lt;/b&gt;&lt;br&gt;&lt;i&gt;[Person]&lt;/i&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Consume las APIs REST&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="160" x="520" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="preg-svc" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1168BD;strokeColor=#0B4884;fontColor=#FFFFFF;arcSize=8;" value="&lt;b&gt;pregunta-service&lt;/b&gt;&lt;br&gt;&lt;i&gt;[Microservicio]&lt;/i&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Java 21 · Spring Boot · JPA/Hibernate&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Gestiona las preguntas, sus invariantes y su ciclo de vida.&lt;/font&gt;" vertex="1">
+          <mxGeometry height="140" width="320" x="41" y="239" as="geometry" />
+        </mxCell>
+        <mxCell id="rev-svc" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1168BD;strokeColor=#0B4884;fontColor=#FFFFFF;arcSize=8;" value="&lt;b&gt;revision-service&lt;/b&gt;&lt;br&gt;&lt;i&gt;[Microservicio]&lt;/i&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Node.js · TypeScript · NestJS · TypeORM&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Gestiona revisores, evaluaciones y el resultado de la revisión.&lt;/font&gt;" vertex="1">
+          <mxGeometry height="140" width="320" x="814" y="245" as="geometry" />
+        </mxCell>
+        <mxCell id="preg-db" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#1168BD;strokeColor=#0B4884;fontColor=#FFFFFF;" value="&lt;b&gt;pregunta-db&lt;/b&gt;&lt;br&gt;&lt;i&gt;[PostgreSQL]&lt;/i&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Persistencia propia de Pregunta&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="220" x="91" y="439" as="geometry" />
+        </mxCell>
+        <mxCell id="rev-db" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#1168BD;strokeColor=#0B4884;fontColor=#FFFFFF;" value="&lt;b&gt;revision-db&lt;/b&gt;&lt;br&gt;&lt;i&gt;[PostgreSQL]&lt;/i&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Persistencia propia de Revisión&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="220" x="864" y="445" as="geometry" />
+        </mxCell>
+        <mxCell id="rabbitmq" parent="1" style="shape=cylinder3;size=15;direction=south;whiteSpace=wrap;html=1;boundedLbl=1;rounded=0;labelBackgroundColor=none;fillColor=#438DD5;fontSize=12;fontColor=#FFFFFF;align=center;strokeColor=#2E6295;metaEdit=1;points=[[0.5,0,0],[1,0.25,0],[1,0.5,0],[1,0.75,0],[0.5,1,0],[0,0.75,0],[0,0.5,0],[0,0.25,0]];resizable=0;" value="&lt;b&gt;RabbitMQ&lt;/b&gt;&lt;br&gt;&lt;i&gt;[Message Broker]&lt;/i&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Exchange: saberpro.events&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="220" x="478" y="373" as="geometry" />
+        </mxCell>
+        <mxCell id="note1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=9;fontStyle=2;fontColor=#888888;" value="Publicación de eventos mediante Transactional Outbox" vertex="1">
+          <mxGeometry height="16" width="240" x="468" y="468" as="geometry" />
+        </mxCell>
+        <mxCell id="e-rest1" edge="1" parent="1" source="person1" style="edgeStyle=none;rounded=0;html=1;endArrow=block;fontSize=10;fontColor=#333333;strokeColor=#333333;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="preg-svc" value="Consume API&#xa;[REST/HTTP]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-rest2" edge="1" parent="1" source="person1" style="edgeStyle=none;rounded=0;html=1;endArrow=block;fontSize=10;fontColor=#333333;strokeColor=#333333;exitX=0.7;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="rev-svc" value="Consume API&#xa;[REST/HTTP]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-grpc" edge="1" parent="1" source="rev-svc" style="edgeStyle=none;rounded=0;html=1;endArrow=block;fontSize=10;fontColor=#222222;strokeColor=#222222;strokeWidth=2;exitX=0;exitY=0.25;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;" target="preg-svc" value="Inicia revisión&#xa;[gRPC · IniciarRevision]">
+          <mxGeometry relative="1" x="-0.0215" y="-19" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-db1" edge="1" parent="1" source="preg-svc" style="edgeStyle=none;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#0B4884;strokeWidth=1.5;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="preg-db" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-db2" edge="1" parent="1" source="rev-svc" style="edgeStyle=none;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#0B4884;strokeWidth=1.5;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="rev-db" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-mqA-pub" edge="1" parent="1" source="preg-svc" style="edgeStyle=none;rounded=0;html=1;endArrow=block;dashed=1;fontSize=9;fontColor=#2E6295;strokeColor=#2E6295;exitX=1;exitY=0.55;exitDx=0;exitDy=0;entryX=0.025;entryY=0.944;entryDx=0;entryDy=0;entryPerimeter=0;" target="rabbitmq" value="Publica PreguntaEnviadaARevision&#xa;[RabbitMQ]">
+          <mxGeometry relative="1" x="0.8843" y="42" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-mqA-del" edge="1" parent="1" source="rabbitmq" style="edgeStyle=none;rounded=0;html=1;endArrow=block;dashed=1;fontSize=9;fontColor=#2E6295;strokeColor=#2E6295;entryX=0;entryY=0.55;entryDx=0;entryDy=0;exitX=0.017;exitY=0.049;exitDx=0;exitDy=0;exitPerimeter=0;" target="rev-svc" value="Entrega PreguntaEnviadaARevision&#xa;[RabbitMQ]">
+          <mxGeometry relative="1" x="-0.9647" y="40" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="689.18" y="383.47" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-mqB-pub" edge="1" parent="1" source="rev-svc" style="edgeStyle=none;rounded=0;html=1;endArrow=block;dashed=1;fontSize=9;fontColor=#2E6295;strokeColor=#2E6295;exitX=0.157;exitY=1.003;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.98;entryY=0.035;entryDx=0;entryDy=0;entryPerimeter=0;" target="rabbitmq" value="Publica RevisionFinalizada&#xa;[RabbitMQ]">
+          <mxGeometry relative="1" x="0.0104" y="-35" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="698" y="472.29" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-mqB-del" edge="1" parent="1" source="rabbitmq" style="edgeStyle=none;rounded=0;html=1;endArrow=block;dashed=1;fontSize=9;fontColor=#2E6295;strokeColor=#2E6295;exitX=0.993;exitY=0.948;exitDx=0;exitDy=0;entryX=0.876;entryY=1.018;entryDx=0;entryDy=0;exitPerimeter=0;entryPerimeter=0;" target="preg-svc" value="&lt;span&gt;Entrega RevisionFinalizada&lt;br&gt;[RabbitMQ]&lt;/span&gt;">
+          <mxGeometry relative="1" x="0.0302" y="-34" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

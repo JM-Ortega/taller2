@@ -9,26 +9,13 @@ El repositorio implementa dos microservicios correspondientes a dos Bounded Cont
 - **Pregunta**: identidad de la pregunta, autoría (`autorId` como referencia opaca), contexto, pregunta directa, cinco opciones, respuesta correcta, justificación, bibliografía, competencia, tema, subtema, nivel de dificultad, estado y versión enviada a revisión. El modelo reconoce los estados `BORRADOR`, `EN_CONSTRUCCION`, `PENDIENTE_REVISION`, `EN_REVISION`, `APROBADA`, `RECHAZADA`, `PUBLICADA` y `ARCHIVADA`. El flujo implementado en este Taller se concentra en el ciclo de creación, revisión, aprobación o rechazo y reapertura.
 - **Revisión**: solicitudes locales de revisión, revisores asignados, evaluaciones individuales con criterios y observaciones, snapshot de la pregunta evaluada, resultado global e historial de revisiones.
 
+Este alcance no implementa gestión de usuarios o autenticación, frontend, simulacros, seguimiento académico ni la capacidad de publicación, entre otras capacidades del sistema global. Tampoco incorpora infraestructura adicional como API Gateway, Kubernetes, service discovery, Redis o service mesh. `autorId` y `revisorId` son referencias opacas; este repositorio no implementa un microservicio de Usuarios.
+
 ## Arquitectura
 
-```text
-Cliente / Postman
-        │
-        ├── REST → pregunta-service
-        └── REST → revision-service
+![Arquitectura de microservicios del Banco de Preguntas Saber Pro](docs/architecture/arquitectura.svg)
 
-pregunta-service
-        │
-        ├── PostgreSQL propio
-        ├── servidor gRPC
-        └── RabbitMQ productor/consumidor
-
-revision-service
-        │
-        ├── PostgreSQL propio
-        ├── cliente gRPC → pregunta-service
-        └── RabbitMQ productor/consumidor
-```
+El archivo editable del diagrama se encuentra en [docs/architecture/arquitectura.drawio](docs/architecture/arquitectura.drawio).
 
 Ambos servicios tienen bases de datos independientes: no comparten tablas ni existen claves foráneas entre microservicios. La comunicación entre contextos combina dos vías:
 
@@ -69,27 +56,17 @@ Ambos servicios separan Domain, Application, Infrastructure e Interfaces/adapter
 ## Flujo de revisión
 
 1. Se crea una Pregunta en estado `BORRADOR`, con `numeroVersionRevision = 0`.
-2. Se envía a revisión: `BORRADOR → PENDIENTE_REVISION`. En el primer
-   envío, `numeroVersionRevision` pasa de `0` a `1`.
-3. Pregunta persiste el cambio de estado y registra el evento de
-   integración `PreguntaEnviadaARevision` en su Outbox dentro de la misma
-   transacción.
-4. RabbitMQ entrega `PreguntaEnviadaARevision` a Revisión, que registra una
-   solicitud local de revisión.
+2. Se envía a revisión: `BORRADOR → PENDIENTE_REVISION`. En el primer envío, `numeroVersionRevision` pasa de `0` a `1`.
+3. Pregunta persiste el cambio de estado y registra el evento de integración `PreguntaEnviadaARevision` en su Outbox dentro de la misma transacción.
+4. RabbitMQ entrega `PreguntaEnviadaARevision` a Revisión, que registra una solicitud local de revisión.
 5. Se crea una Revisión con uno o más revisores asignados.
-6. Revisión llama de forma síncrona a Pregunta mediante gRPC
-   (`IniciarRevision`).
+6. Revisión llama de forma síncrona a Pregunta mediante gRPC (`IniciarRevision`).
 7. Pregunta transiciona `PENDIENTE_REVISION → EN_REVISION`.
-8. Los revisores asignados registran sus evaluaciones; se requiere que
-   todos evalúen para obtener un resultado.
-9. El resultado es `FAVORABLE` si hay unanimidad favorable, o
-   `DESFAVORABLE` si algún revisor evalúa en contra.
-10. Al finalizar, Revisión persiste el resultado y registra
-    `RevisionFinalizada` en su Outbox; RabbitMQ lo entrega a Pregunta.
-11. Pregunta aplica el resultado: `FAVORABLE → APROBADA` o
-    `DESFAVORABLE → RECHAZADA`.
-12. Una pregunta `RECHAZADA` puede reabrirse (`RECHAZADA → BORRADOR`),
-    conservando su `numeroVersionRevision`.
+8. Los revisores asignados registran sus evaluaciones; se requiere que todos evalúen para obtener un resultado.
+9. El resultado es `FAVORABLE` si hay unanimidad favorable, o `DESFAVORABLE` si algún revisor evalúa en contra.
+10. Al finalizar, Revisión persiste el resultado y registra `RevisionFinalizada` en su Outbox; RabbitMQ lo entrega a Pregunta.
+11. Pregunta aplica el resultado: `FAVORABLE → APROBADA` o `DESFAVORABLE → RECHAZADA`.
+12. Una pregunta `RECHAZADA` puede reabrirse (`RECHAZADA → BORRADOR`), conservando su `numeroVersionRevision`.
 
 ## Comunicación entre microservicios
 
