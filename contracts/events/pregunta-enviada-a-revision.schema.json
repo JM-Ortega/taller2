@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PreguntaEnviadaARevision",
+  "description": "Evento de integración emitido por el BC Pregunta cuando una versión concreta de una pregunta queda enviada a revisión.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "eventType",
+    "occurredAt",
+    "preguntaId",
+    "autorId",
+    "versionPregunta"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "eventType": {
+      "const": "PreguntaEnviadaARevision"
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "preguntaId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "autorId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "versionPregunta": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

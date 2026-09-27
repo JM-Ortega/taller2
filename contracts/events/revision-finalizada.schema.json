@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RevisionFinalizada",
+  "description": "Evento de integración emitido por el BC Revisión cuando una revisión de una versión concreta de una pregunta ha finalizado con un resultado global.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "eventType",
+    "occurredAt",
+    "revisionId",
+    "preguntaId",
+    "versionPregunta",
+    "resultado"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "eventType": {
+      "const": "RevisionFinalizada"
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "revisionId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "preguntaId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "versionPregunta": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "resultado": {
+      "type": "string",
+      "enum": [
+        "FAVORABLE",
+        "DESFAVORABLE"
+      ]
+    }
+  }
+}

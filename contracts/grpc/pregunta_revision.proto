@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package saberpro.preguntas;
+
+option java_package = "co.edu.unicauca.saberpro.preguntas.grpc";
+option java_multiple_files = true;
+option java_outer_classname = "PreguntaRevisionProto";
+
+// Contrato síncrono interno usado por el BC Revisión para iniciar
+// la revisión de una versión exacta de una Pregunta y obtener
+// el snapshot inmutable que será evaluado.
+service PreguntaRevisionService {
+  rpc IniciarRevision(IniciarRevisionRequest)
+      returns (IniciarRevisionResponse);
+}
+
+message IniciarRevisionRequest {
+  // UUID textual de la Pregunta.
+  string pregunta_id = 1;
+  int32 version = 2;
+}
+
+message IniciarRevisionResponse {
+  // Debe coincidir exactamente con el UUID solicitado.
+  string pregunta_id = 1;
+  int32 version = 2;
+  string contexto = 3;
+  string pregunta_directa = 4;
+  repeated OpcionRespuesta opciones = 5;
+  string justificacion = 6;
+  string bibliografia = 7;
+  string competencia = 8;
+  string tema = 9;
+  string subtema = 10;
+  string nivel_dificultad = 11;
+}
+
+message OpcionRespuesta {
+  string texto = 1;
+  bool correcta = 2;
+}
