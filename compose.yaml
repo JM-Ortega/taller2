@@ -1,0 +1,91 @@
+services:
+  pregunta-db:
+    image: postgres:17.11
+    environment:
+      POSTGRES_DB: pregunta
+      POSTGRES_USER: pregunta
+      POSTGRES_PASSWORD: pregunta
+    volumes:
+      - pregunta_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pregunta -d pregunta"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  revision-db:
+    image: postgres:17.11
+    environment:
+      POSTGRES_DB: revision
+      POSTGRES_USER: revision
+      POSTGRES_PASSWORD: revision
+    volumes:
+      - revision_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U revision -d revision"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:4.3.6-management
+    environment:
+      RABBITMQ_DEFAULT_USER: saberpro
+      RABBITMQ_DEFAULT_PASS: saberpro
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  pregunta-service:
+    build:
+      context: .
+      dockerfile: pregunta-service/Dockerfile
+    environment:
+      SERVER_PORT: 8080
+      SPRING_GRPC_SERVER_PORT: 9090
+      SPRING_DATASOURCE_URL: jdbc:postgresql://pregunta-db:5432/pregunta
+      SPRING_DATASOURCE_USERNAME: pregunta
+      SPRING_DATASOURCE_PASSWORD: pregunta
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: saberpro
+      SPRING_RABBITMQ_PASSWORD: saberpro
+      OUTBOX_POLL_INTERVAL_MS: 1000
+    ports:
+      - "8080:8080"
+    depends_on:
+      pregunta-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  revision-service:
+    build:
+      context: .
+      dockerfile: revision-service/Dockerfile
+    environment:
+      PORT: 3000
+      REVISION_DATABASE_URL: postgres://revision:revision@revision-db:5432/revision
+      REVISION_DB_SYNCHRONIZE: "true"
+      PREGUNTA_GRPC_URL: pregunta-service:9090
+      RABBITMQ_URL: amqp://saberpro:saberpro@rabbitmq:5672
+      OUTBOX_POLL_INTERVAL_MS: 1000
+    ports:
+      - "3000:3000"
+    depends_on:
+      revision-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      pregunta-service:
+        condition: service_started
+
+volumes:
+  pregunta_pg_data:
+  revision_pg_data:

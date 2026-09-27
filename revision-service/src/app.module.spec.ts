@@ -57,4 +57,47 @@ describe('AppModule', () => {
       await moduleRef.close();
     },
   );
+
+  it(
+    'registra el cliente gRPC de Pregunta con loader.defaults=true, ' +
+      'requerido para que @grpc/proto-loader materialice los valores ' +
+      'escalares por defecto de proto3 (false, "", 0) que el wire omite',
+    async () => {
+      // Se reemplaza PreguntaRevisionGateway (y con ello su factoría
+      // crearPreguntaRevisionGateway, que llama a ClientGrpc.getService) porque
+      // esta suite reutiliza como singleton el mismo cliente gRPC registrado por
+      // ClientsModule.register en AppModule: el test anterior ya lo cerró con
+      // moduleRef.close(), lo que vacía su caché interna de servicios y rompe
+      // getService() en compilaciones posteriores. options no se ve afectado por
+      // close(), así que basta con evitar esa llamada para inspeccionarlo aquí.
+      const moduleRef = await Test.createTestingModule({
+        imports: [AppModule],
+      })
+        .overrideProvider(PreguntaRevisionGateway)
+        .useValue({
+          iniciarRevision: async () => {
+            throw new Error('no debe invocarse en este test de configuración');
+          },
+        })
+        .compile();
+
+      const grpcClient = moduleRef.get('PREGUNTA_GRPC_PACKAGE') as {
+        options: {
+          package?: string;
+          protoPath?: string;
+          loader?: { defaults?: boolean };
+        };
+      };
+
+      expect(grpcClient.options.package).toBe('saberpro.preguntas');
+      expect(grpcClient.options.protoPath?.endsWith('contracts/grpc/pregunta_revision.proto')).toBe(
+        true,
+      );
+      expect(grpcClient.options.loader).toEqual(
+        expect.objectContaining({ defaults: true }),
+      );
+
+      await moduleRef.close();
+    },
+  );
 });

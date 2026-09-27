@@ -39,6 +39,12 @@ const PREGUNTA_GRPC_PACKAGE = 'PREGUNTA_GRPC_PACKAGE';
           package: 'saberpro.preguntas',
           protoPath: join(__dirname, '../../contracts/grpc/pregunta_revision.proto'),
           url: process.env.PREGUNTA_GRPC_URL ?? 'localhost:9090',
+          loader: {
+            // proto3 omite del wire los valores por defecto (false, "", 0);
+            // sin esto, @grpc/proto-loader no repone esos campos al decodificar
+            // y el adaptador los ve como ausentes en vez de con su valor real.
+            defaults: true,
+          },
         },
       },
     ]),
