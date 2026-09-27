@@ -1,0 +1,1468 @@
+{
+  "info": {
+    "_postman_id": "421fa762-ebd1-4094-aa5f-79a6d4201b31",
+    "name": "Taller 2 — Banco de Preguntas Saber Pro",
+    "description": "Colección de pruebas funcionales del flujo de creación y revisión de preguntas. Recorre las APIs REST de los microservicios Pregunta y Revisión y verifica los efectos de la comunicación asíncrona mediante RabbitMQ y de la comunicación síncrona mediante gRPC. Los escenarios deben ejecutarse en el orden 01 → 02 → 03.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 - Flujo favorable",
+      "description": "Crea una pregunta, la envía a revisión y registra la evaluación favorable de dos revisores. El flujo finaliza con la pregunta en estado APROBADA.",
+      "item": [
+        {
+          "name": "01 Crear pregunta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{preguntaBaseUrl}}/api/v1/preguntas",
+              "host": [
+                "{{preguntaBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "preguntas"
+              ]
+            },
+            "description": "Crea una pregunta en estado BORRADOR y con versión de revisión 0.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"autorId\": \"autor-001\",\n  \"contexto\": \"Una institución evalúa la arquitectura de una aplicación distribuida.\",\n  \"preguntaDirecta\": \"¿Cuál alternativa describe una comunicación síncrona entre microservicios?\",\n  \"opciones\": [\n    {\n      \"texto\": \"Un servicio invoca gRPC y espera la respuesta del otro servicio.\",\n      \"correcta\": true\n    },\n    {\n      \"texto\": \"Un servicio publica un evento y continúa sin esperar al consumidor.\",\n      \"correcta\": false\n    },\n    {\n      \"texto\": \"Dos servicios escriben directamente en la misma base de datos.\",\n      \"correcta\": false\n    },\n    {\n      \"texto\": \"Un consumidor procesa un mensaje de una cola sin responder al productor.\",\n      \"correcta\": false\n    },\n    {\n      \"texto\": \"Un servicio almacena un evento en su Outbox local.\",\n      \"correcta\": false\n    }\n  ],\n  \"justificacion\": \"En una comunicación síncrona el emisor espera una respuesta; gRPC permite ese patrón.\",\n  \"bibliografia\": \"Material del curso de Arquitectura de Microservicios.\",\n  \"competencia\": \"Diseño de software\",\n  \"tema\": \"Microservicios\",\n  \"subtema\": \"Comunicación entre microservicios\",\n  \"nivelDificultad\": \"MEDIO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function esUuid(valor) {",
+                  "  return typeof valor === \"string\" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(valor);",
+                  "}",
+                  "",
+                  "pm.test(\"status 201\", function () { pm.response.to.have.status(201); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"preguntaId es un UUID\", function () {",
+                  "  pm.expect(esUuid(body.preguntaId)).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test(\"estado inicial es BORRADOR\", function () {",
+                  "  pm.expect(body.estado).to.eql(\"BORRADOR\");",
+                  "});",
+                  "",
+                  "pm.test(\"numeroVersionRevision inicial es 0\", function () {",
+                  "  pm.expect(body.numeroVersionRevision).to.eql(0);",
+                  "});",
+                  "",
+                  "pm.test(\"tiene 5 opciones\", function () {",
+                  "  pm.expect(body.opciones).to.have.lengthOf(5);",
+                  "});",
+                  "",
+                  "pm.test(\"Location apunta a la pregunta creada\", function () {",
+                  "  const location = pm.response.headers.get(\"Location\");",
+                  "  pm.expect(location).to.eql(\"/api/v1/preguntas/\" + body.preguntaId);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"preguntaId\", body.preguntaId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 Obtener pregunta en borrador",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{preguntaBaseUrl}}/api/v1/preguntas/{{preguntaId}}",
+              "host": [
+                "{{preguntaBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "preguntas",
+                "{{preguntaId}}"
+              ]
+            },
+            "description": "Consulta la pregunta recién creada y verifica su estado inicial."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"preguntaId coincide\", function () {",
+                  "  pm.expect(body.preguntaId).to.eql(pm.collectionVariables.get(\"preguntaId\"));",
+                  "});",
+                  "",
+                  "pm.test(\"estado BORRADOR\", function () {",
+                  "  pm.expect(body.estado).to.eql(\"BORRADOR\");",
+                  "});",
+                  "",
+                  "pm.test(\"numeroVersionRevision 0\", function () {",
+                  "  pm.expect(body.numeroVersionRevision).to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 Actualizar pregunta en borrador",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{preguntaBaseUrl}}/api/v1/preguntas/{{preguntaId}}",
+              "host": [
+                "{{preguntaBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "preguntas",
+                "{{preguntaId}}"
+              ]
+            },
+            "description": "Actualiza el contenido editable mientras la pregunta permanece en BORRADOR. La versión de revisión no cambia.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contexto\": \"Una institución evalúa la arquitectura de una aplicación distribuida, con énfasis en los mecanismos de comunicación entre sus servicios.\",\n  \"preguntaDirecta\": \"¿Cuál alternativa describe una comunicación síncrona entre microservicios?\",\n  \"opciones\": [\n    {\n      \"texto\": \"Un servicio invoca gRPC y espera la respuesta del otro servicio.\",\n      \"correcta\": true\n    },\n    {\n      \"texto\": \"Un servicio publica un evento y continúa sin esperar al consumidor.\",\n      \"correcta\": false\n    },\n    {\n      \"texto\": \"Dos servicios escriben directamente en la misma base de datos.\",\n      \"correcta\": false\n    },\n    {\n      \"texto\": \"Un consumidor procesa un mensaje de una cola sin responder al productor.\",\n      \"correcta\": false\n    },\n    {\n      \"texto\": \"Un servicio almacena un evento en su Outbox local.\",\n      \"correcta\": false\n    }\n  ],\n  \"justificacion\": \"En una comunicación síncrona el emisor espera una respuesta; gRPC permite ese patrón.\",\n  \"bibliografia\": \"Material del curso de Arquitectura de Microservicios (actualizado tras revisión editorial).\",\n  \"competencia\": \"Diseño de software\",\n  \"tema\": \"Microservicios\",\n  \"subtema\": \"Comunicación entre microservicios\",\n  \"nivelDificultad\": \"MEDIO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"estado sigue BORRADOR\", function () {",
+                  "  pm.expect(body.estado).to.eql(\"BORRADOR\");",
+                  "});",
+                  "",
+                  "pm.test(\"numeroVersionRevision sigue 0\", function () {",
+                  "  pm.expect(body.numeroVersionRevision).to.eql(0);",
+                  "});",
+                  "",
+                  "pm.test(\"bibliografia refleja el cambio\", function () {",
+                  "  pm.expect(body.bibliografia).to.eql(\"Material del curso de Arquitectura de Microservicios (actualizado tras revisión editorial).\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 Enviar a revisión",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{preguntaBaseUrl}}/api/v1/preguntas/{{preguntaId}}/envios-revision",
+              "host": [
+                "{{preguntaBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "preguntas",
+                "{{preguntaId}}",
+                "envios-revision"
+              ]
+            },
+            "description": "Envía la pregunta a revisión. La pregunta pasa a PENDIENTE_REVISION y su versión de revisión se incrementa a 1."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"estado PENDIENTE_REVISION\", function () {",
+                  "  pm.expect(body.estado).to.eql(\"PENDIENTE_REVISION\");",
+                  "});",
+                  "",
+                  "pm.test(\"numeroVersionRevision 1\", function () {",
+                  "  pm.expect(body.numeroVersionRevision).to.eql(1);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"pendingFavorableAttempts\", 0);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05 Esperar proyección en Revisión",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{revisionBaseUrl}}/api/v1/preguntas-pendientes-revision",
+              "host": [
+                "{{revisionBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "preguntas-pendientes-revision"
+              ]
+            },
+            "description": "Consulta las preguntas pendientes hasta que aparezca la versión enviada a revisión."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const MAX_ATTEMPTS = 20;",
+                  "const DELAY_MS = 500;",
+                  "",
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "pm.test(\"respuesta es un array\", function () { pm.expect(body).to.be.an(\"array\"); });",
+                  "",
+                  "const preguntaId = pm.collectionVariables.get(\"preguntaId\");",
+                  "const encontrada = body.some(function (item) {",
+                  "  return item.preguntaId === preguntaId && item.versionPregunta === 1;",
+                  "});",
+                  "",
+                  "const intentosPrevios = Number(pm.collectionVariables.get(\"pendingFavorableAttempts\")) || 0;",
+                  "const intentoActual = intentosPrevios + 1;",
+                  "",
+                  "pm.test(\"pregunta v1 proyectada en preguntas-pendientes-revision (con reintento acotado)\", function () {",
+                  "  if (encontrada) { return; }",
+                  "  if (intentoActual >= MAX_ATTEMPTS) {",
+                  "    pm.expect.fail(\"No se alcanzó la condición esperada tras \" + MAX_ATTEMPTS + \" ejecuciones de esta solicitud.\");",
+                  "  }",
+                  "});",
+                  "",
+                  "if (encontrada) {",
+                  "  pm.collectionVariables.unset(\"pendingFavorableAttempts\");",
+                  "} else if (intentoActual < MAX_ATTEMPTS) {",
+                  "  pm.collectionVariables.set(\"pendingFavorableAttempts\", intentoActual);",
+                  "  setTimeout(function () {",
+                  "    pm.execution.setNextRequest(pm.info.requestName);",
+                  "  }, DELAY_MS);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06 Crear revisión",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{revisionBaseUrl}}/api/v1/revisiones",
+              "host": [
+                "{{revisionBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "revisiones"
+              ]
+            },
+            "description": "Crea una revisión con dos revisores e inicia de forma síncrona la revisión de la pregunta mediante gRPC.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"preguntaId\": \"{{preguntaId}}\",\n  \"revisorIds\": [\n    \"revisor-001\",\n    \"revisor-002\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function esUuid(valor) {",
+                  "  return typeof valor === \"string\" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(valor);",
+                  "}",
+                  "",
+                  "pm.test(\"status 201\", function () { pm.response.to.have.status(201); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "const preguntaId = pm.collectionVariables.get(\"preguntaId\");",
+                  "",
+                  "pm.test(\"revisionId es un UUID\", function () {",
+                  "  pm.expect(esUuid(body.revisionId)).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test(\"preguntaId coincide\", function () {",
+                  "  pm.expect(body.preguntaId).to.eql(preguntaId);",
+                  "});",
+                  "",
+                  "pm.test(\"versionPregunta es 1\", function () {",
+                  "  pm.expect(body.versionPregunta).to.eql(1);",
+                  "});",
+                  "",
+                  "pm.test(\"revisorIds asignados exactamente\", function () {",
+                  "  pm.expect(body.revisorIds).to.eql([\"revisor-001\", \"revisor-002\"]);",
+                  "});",
+                  "",
+                  "pm.test(\"evaluaciones vacías\", function () {",
+                  "  pm.expect(body.evaluaciones).to.eql([]);",
+                  "});",
+                  "",
+                  "pm.test(\"resultadoFinal nulo\", function () {",
+                  "  pm.expect(body.resultadoFinal).to.be.null;",
+                  "});",
+                  "",
+                  "pm.test(\"Location apunta a la revisión creada\", function () {",
+                  "  const location = pm.response.headers.get(\"Location\");",
+                  "  pm.expect(location).to.eql(\"/api/v1/revisiones/\" + body.revisionId);",
+                  "});",
+                  "",
+                  "pm.test(\"snapshot de la pregunta conserva 5 opciones\", function () {",
+                  "  pm.expect(body.preguntaParaRevision.opciones).to.have.lengthOf(5);",
+                  "});",
+                  "",
+                  "pm.test(\"snapshot conserva el patrón de opción correcta\", function () {",
+                  "  const correctas = body.preguntaParaRevision.opciones.map(function (o) { return o.correcta; });",
+                  "  pm.expect(correctas).to.eql([true, false, false, false, false]);",
+                  "});",
+                  "",
+                  "pm.test(\"snapshot conserva el contexto actualizado por el PUT\", function () {",
+                  "  pm.expect(body.preguntaParaRevision.contexto).to.eql(\"Una institución evalúa la arquitectura de una aplicación distribuida, con énfasis en los mecanismos de comunicación entre sus servicios.\");",
+                  "});",
+                  "",
+                  "pm.test(\"snapshot conserva preguntaDirecta\", function () {",
+                  "  pm.expect(body.preguntaParaRevision.preguntaDirecta).to.eql(\"¿Cuál alternativa describe una comunicación síncrona entre microservicios?\");",
+                  "});",
+                  "",
+                  "pm.test(\"snapshot conserva justificacion\", function () {",
+                  "  pm.expect(body.preguntaParaRevision.justificacion).to.eql(\"En una comunicación síncrona el emisor espera una respuesta; gRPC permite ese patrón.\");",
+                  "});",
+                  "",
+                  "pm.test(\"snapshot conserva la bibliografia actualizada por el PUT\", function () {",
+                  "  pm.expect(body.preguntaParaRevision.bibliografia).to.eql(\"Material del curso de Arquitectura de Microservicios (actualizado tras revisión editorial).\");",
+                  "});",
+                  "",
+                  "pm.test(\"snapshot conserva competencia\", function () {",
+                  "  pm.expect(body.preguntaParaRevision.competencia).to.eql(\"Diseño de software\");",
+                  "});",
+                  "",
+                  "pm.test(\"snapshot conserva tema\", function () {",
+                  "  pm.expect(body.preguntaParaRevision.tema).to.eql(\"Microservicios\");",
+                  "});",
+                  "",
+                  "pm.test(\"snapshot conserva subtema\", function () {",
+                  "  pm.expect(body.preguntaParaRevision.subtema).to.eql(\"Comunicación entre microservicios\");",
+                  "});",
+                  "",
+                  "pm.test(\"snapshot conserva nivelDificultad\", function () {",
+                  "  pm.expect(body.preguntaParaRevision.nivelDificultad).to.eql(\"MEDIO\");",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"revisionId\", body.revisionId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07 Verificar Pregunta EN_REVISION",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{preguntaBaseUrl}}/api/v1/preguntas/{{preguntaId}}",
+              "host": [
+                "{{preguntaBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "preguntas",
+                "{{preguntaId}}"
+              ]
+            },
+            "description": "Verifica que la pregunta haya pasado a EN_REVISION después de crear la revisión."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"estado EN_REVISION\", function () {",
+                  "  pm.expect(body.estado).to.eql(\"EN_REVISION\");",
+                  "});",
+                  "",
+                  "pm.test(\"numeroVersionRevision 1\", function () {",
+                  "  pm.expect(body.numeroVersionRevision).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 Registrar evaluación revisor 1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{revisionBaseUrl}}/api/v1/revisiones/{{revisionId}}/evaluaciones",
+              "host": [
+                "{{revisionBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "revisiones",
+                "{{revisionId}}",
+                "evaluaciones"
+              ]
+            },
+            "description": "Registra la evaluación favorable del primer revisor. La revisión permanece en curso hasta que todos los revisores hayan evaluado.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"revisorId\": \"revisor-001\",\n  \"criterios\": [\n    {\n      \"nombre\": \"Coherencia entre contexto y pregunta\",\n      \"cumple\": true\n    }\n  ],\n  \"observaciones\": \"Sin observaciones.\",\n  \"resultado\": \"FAVORABLE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"una evaluación registrada\", function () {",
+                  "  pm.expect(body.evaluaciones).to.have.lengthOf(1);",
+                  "});",
+                  "",
+                  "pm.test(\"resultadoFinal aún nulo\", function () {",
+                  "  pm.expect(body.resultadoFinal).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09 Registrar evaluación revisor 2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{revisionBaseUrl}}/api/v1/revisiones/{{revisionId}}/evaluaciones",
+              "host": [
+                "{{revisionBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "revisiones",
+                "{{revisionId}}",
+                "evaluaciones"
+              ]
+            },
+            "description": "Registra la evaluación favorable del segundo revisor y completa la revisión con resultado FAVORABLE.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"revisorId\": \"revisor-002\",\n  \"criterios\": [\n    {\n      \"nombre\": \"Coherencia entre contexto y pregunta\",\n      \"cumple\": true\n    }\n  ],\n  \"observaciones\": \"\",\n  \"resultado\": \"FAVORABLE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"dos evaluaciones registradas\", function () {",
+                  "  pm.expect(body.evaluaciones).to.have.lengthOf(2);",
+                  "});",
+                  "",
+                  "pm.test(\"resultadoFinal FAVORABLE\", function () {",
+                  "  pm.expect(body.resultadoFinal).to.eql(\"FAVORABLE\");",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"approvedAttempts\", 0);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10 Esperar Pregunta APROBADA",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{preguntaBaseUrl}}/api/v1/preguntas/{{preguntaId}}",
+              "host": [
+                "{{preguntaBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "preguntas",
+                "{{preguntaId}}"
+              ]
+            },
+            "description": "Consulta la pregunta hasta observar el estado APROBADA después de finalizar la revisión."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const MAX_ATTEMPTS = 20;",
+                  "const DELAY_MS = 500;",
+                  "",
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "const preguntaId = pm.collectionVariables.get(\"preguntaId\");",
+                  "const encontrada = body.estado === \"APROBADA\";",
+                  "",
+                  "const intentosPrevios = Number(pm.collectionVariables.get(\"approvedAttempts\")) || 0;",
+                  "const intentoActual = intentosPrevios + 1;",
+                  "",
+                  "pm.test(\"pregunta converge a APROBADA (con reintento acotado)\", function () {",
+                  "  if (encontrada) { return; }",
+                  "  if (intentoActual >= MAX_ATTEMPTS) {",
+                  "    pm.expect.fail(\"No se alcanzó la condición esperada tras \" + MAX_ATTEMPTS + \" ejecuciones de esta solicitud.\");",
+                  "  }",
+                  "});",
+                  "",
+                  "if (encontrada) {",
+                  "  pm.collectionVariables.unset(\"approvedAttempts\");",
+                  "  pm.test(\"preguntaId coincide\", function () { pm.expect(body.preguntaId).to.eql(preguntaId); });",
+                  "  pm.test(\"numeroVersionRevision sigue 1\", function () { pm.expect(body.numeroVersionRevision).to.eql(1); });",
+                  "} else if (intentoActual < MAX_ATTEMPTS) {",
+                  "  pm.collectionVariables.set(\"approvedAttempts\", intentoActual);",
+                  "  setTimeout(function () {",
+                  "    pm.execution.setNextRequest(pm.info.requestName);",
+                  "  }, DELAY_MS);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11 Obtener revisión final",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{revisionBaseUrl}}/api/v1/revisiones/{{revisionId}}",
+              "host": [
+                "{{revisionBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "revisiones",
+                "{{revisionId}}"
+              ]
+            },
+            "description": "Consulta la revisión finalizada y verifica su resultado y evaluaciones."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"revisionId coincide\", function () {",
+                  "  pm.expect(body.revisionId).to.eql(pm.collectionVariables.get(\"revisionId\"));",
+                  "});",
+                  "",
+                  "pm.test(\"resultadoFinal FAVORABLE\", function () {",
+                  "  pm.expect(body.resultadoFinal).to.eql(\"FAVORABLE\");",
+                  "});",
+                  "",
+                  "pm.test(\"dos evaluaciones\", function () {",
+                  "  pm.expect(body.evaluaciones).to.have.lengthOf(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12 Consultar historial de revisiones",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{revisionBaseUrl}}/api/v1/revisiones?preguntaId={{preguntaId}}",
+              "host": [
+                "{{revisionBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "revisiones"
+              ],
+              "query": [
+                {
+                  "key": "preguntaId",
+                  "value": "{{preguntaId}}"
+                }
+              ]
+            },
+            "description": "Consulta el historial de revisiones de la pregunta y verifica la revisión creada para su versión actual."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"respuesta es un array\", function () {",
+                  "  pm.expect(body).to.be.an(\"array\");",
+                  "});",
+                  "",
+                  "pm.test(\"contiene exactamente una revisión para esta pregunta\", function () {",
+                  "  pm.expect(body).to.have.lengthOf(1);",
+                  "});",
+                  "",
+                  "pm.test(\"corresponde a la revisión creada en esta ejecución\", function () {",
+                  "  pm.expect(body[0].revisionId).to.eql(pm.collectionVariables.get(\"revisionId\"));",
+                  "});",
+                  "",
+                  "pm.test(\"resultadoFinal FAVORABLE\", function () {",
+                  "  pm.expect(body[0].resultadoFinal).to.eql(\"FAVORABLE\");",
+                  "});",
+                  "",
+                  "pm.test(\"dos evaluaciones\", function () {",
+                  "  pm.expect(body[0].evaluaciones).to.have.lengthOf(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Rechazo y reapertura",
+      "description": "Crea una segunda pregunta, registra una evaluación desfavorable y verifica su paso a RECHAZADA. Luego la reabre para permitir su corrección. También verifica que el autor no pueda ser asignado como revisor de su propia pregunta.",
+      "item": [
+        {
+          "name": "01 Crear pregunta para rechazo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{preguntaBaseUrl}}/api/v1/preguntas",
+              "host": [
+                "{{preguntaBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "preguntas"
+              ]
+            },
+            "description": "Crea una segunda pregunta independiente para comprobar el flujo de rechazo y reapertura.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"autorId\": \"autor-002\",\n  \"contexto\": \"Un equipo diseña la comunicación entre el servicio de Preguntas y el de Revisión para evitar pérdida de eventos.\",\n  \"preguntaDirecta\": \"¿Cuál alternativa describe correctamente el patrón Outbox?\",\n  \"opciones\": [\n    {\n      \"texto\": \"El servicio escribe el evento en una tabla propia dentro de la misma transacción que el cambio de estado.\",\n      \"correcta\": true\n    },\n    {\n      \"texto\": \"El servicio publica el evento directamente a RabbitMQ antes de confirmar la transacción de base de datos.\",\n      \"correcta\": false\n    },\n    {\n      \"texto\": \"El servicio consumidor escribe directamente en la base de datos del servicio productor.\",\n      \"correcta\": false\n    },\n    {\n      \"texto\": \"El servicio productor invoca gRPC de forma asíncrona para notificar el cambio.\",\n      \"correcta\": false\n    },\n    {\n      \"texto\": \"El servicio productor omite persistir el evento si RabbitMQ no está disponible.\",\n      \"correcta\": false\n    }\n  ],\n  \"justificacion\": \"El patrón Outbox garantiza atomicidad entre el cambio de estado y la publicación del evento.\",\n  \"bibliografia\": \"Material del curso de Arquitectura de Microservicios.\",\n  \"competencia\": \"Diseño de software\",\n  \"tema\": \"Microservicios\",\n  \"subtema\": \"Consistencia eventual\",\n  \"nivelDificultad\": \"MEDIO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 201\", function () { pm.response.to.have.status(201); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"estado inicial BORRADOR\", function () {",
+                  "  pm.expect(body.estado).to.eql(\"BORRADOR\");",
+                  "});",
+                  "",
+                  "pm.test(\"numeroVersionRevision inicial 0\", function () {",
+                  "  pm.expect(body.numeroVersionRevision).to.eql(0);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"preguntaRechazoId\", body.preguntaId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 Enviar a revisión",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{preguntaBaseUrl}}/api/v1/preguntas/{{preguntaRechazoId}}/envios-revision",
+              "host": [
+                "{{preguntaBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "preguntas",
+                "{{preguntaRechazoId}}",
+                "envios-revision"
+              ]
+            },
+            "description": "Envía la pregunta a revisión y genera una nueva versión de revisión."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"estado PENDIENTE_REVISION\", function () {",
+                  "  pm.expect(body.estado).to.eql(\"PENDIENTE_REVISION\");",
+                  "});",
+                  "",
+                  "pm.test(\"numeroVersionRevision 1\", function () {",
+                  "  pm.expect(body.numeroVersionRevision).to.eql(1);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"pendingRechazoAttempts\", 0);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 Esperar proyección en Revisión",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{revisionBaseUrl}}/api/v1/preguntas-pendientes-revision",
+              "host": [
+                "{{revisionBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "preguntas-pendientes-revision"
+              ]
+            },
+            "description": "Consulta las preguntas pendientes hasta que aparezca la versión enviada a revisión."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const MAX_ATTEMPTS = 20;",
+                  "const DELAY_MS = 500;",
+                  "",
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "pm.test(\"respuesta es un array\", function () { pm.expect(body).to.be.an(\"array\"); });",
+                  "",
+                  "const preguntaRechazoId = pm.collectionVariables.get(\"preguntaRechazoId\");",
+                  "const encontrada = body.some(function (item) {",
+                  "  return item.preguntaId === preguntaRechazoId && item.versionPregunta === 1;",
+                  "});",
+                  "",
+                  "const intentosPrevios = Number(pm.collectionVariables.get(\"pendingRechazoAttempts\")) || 0;",
+                  "const intentoActual = intentosPrevios + 1;",
+                  "",
+                  "pm.test(\"pregunta v1 proyectada en preguntas-pendientes-revision (con reintento acotado)\", function () {",
+                  "  if (encontrada) { return; }",
+                  "  if (intentoActual >= MAX_ATTEMPTS) {",
+                  "    pm.expect.fail(\"No se alcanzó la condición esperada tras \" + MAX_ATTEMPTS + \" ejecuciones de esta solicitud.\");",
+                  "  }",
+                  "});",
+                  "",
+                  "if (encontrada) {",
+                  "  pm.collectionVariables.unset(\"pendingRechazoAttempts\");",
+                  "} else if (intentoActual < MAX_ATTEMPTS) {",
+                  "  pm.collectionVariables.set(\"pendingRechazoAttempts\", intentoActual);",
+                  "  setTimeout(function () {",
+                  "    pm.execution.setNextRequest(pm.info.requestName);",
+                  "  }, DELAY_MS);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 Autor no puede ser su propio revisor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{revisionBaseUrl}}/api/v1/revisiones",
+              "host": [
+                "{{revisionBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "revisiones"
+              ]
+            },
+            "description": "Verifica que el autor de la pregunta no pueda ser asignado como revisor. La solicitud permanece disponible para una asignación válida.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"preguntaId\": \"{{preguntaRechazoId}}\",\n  \"revisorIds\": [\n    \"autor-002\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 409\", function () { pm.response.to.have.status(409); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"código de error indica autor incluido como revisor\", function () {",
+                  "  pm.expect(body.code).to.eql(\"AUTOR_INCLUIDO_COMO_REVISOR\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05 Crear revisión válida",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{revisionBaseUrl}}/api/v1/revisiones",
+              "host": [
+                "{{revisionBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "revisiones"
+              ]
+            },
+            "description": "Crea la revisión con un revisor distinto del autor e inicia la revisión de la pregunta mediante gRPC.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"preguntaId\": \"{{preguntaRechazoId}}\",\n  \"revisorIds\": [\n    \"revisor-003\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function esUuid(valor) {",
+                  "  return typeof valor === \"string\" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(valor);",
+                  "}",
+                  "",
+                  "pm.test(\"status 201\", function () { pm.response.to.have.status(201); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"revisionId es un UUID\", function () {",
+                  "  pm.expect(esUuid(body.revisionId)).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test(\"preguntaId coincide\", function () {",
+                  "  pm.expect(body.preguntaId).to.eql(pm.collectionVariables.get(\"preguntaRechazoId\"));",
+                  "});",
+                  "",
+                  "pm.test(\"versionPregunta es 1\", function () {",
+                  "  pm.expect(body.versionPregunta).to.eql(1);",
+                  "});",
+                  "",
+                  "pm.test(\"revisorIds asignados exactamente\", function () {",
+                  "  pm.expect(body.revisorIds).to.eql([\"revisor-003\"]);",
+                  "});",
+                  "",
+                  "pm.test(\"evaluaciones vacías\", function () {",
+                  "  pm.expect(body.evaluaciones).to.eql([]);",
+                  "});",
+                  "",
+                  "pm.test(\"resultadoFinal nulo\", function () {",
+                  "  pm.expect(body.resultadoFinal).to.be.null;",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"revisionRechazoId\", body.revisionId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06 Verificar Pregunta EN_REVISION",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{preguntaBaseUrl}}/api/v1/preguntas/{{preguntaRechazoId}}",
+              "host": [
+                "{{preguntaBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "preguntas",
+                "{{preguntaRechazoId}}"
+              ]
+            },
+            "description": "Verifica que la pregunta haya pasado a EN_REVISION."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"estado EN_REVISION\", function () {",
+                  "  pm.expect(body.estado).to.eql(\"EN_REVISION\");",
+                  "});",
+                  "",
+                  "pm.test(\"numeroVersionRevision 1\", function () {",
+                  "  pm.expect(body.numeroVersionRevision).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07 Registrar evaluación DESFAVORABLE",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{revisionBaseUrl}}/api/v1/revisiones/{{revisionRechazoId}}/evaluaciones",
+              "host": [
+                "{{revisionBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "revisiones",
+                "{{revisionRechazoId}}",
+                "evaluaciones"
+              ]
+            },
+            "description": "Registra una evaluación DESFAVORABLE. Al existir un único revisor, la revisión finaliza con ese resultado.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"revisorId\": \"revisor-003\",\n  \"criterios\": [\n    {\n      \"nombre\": \"Coherencia entre contexto y pregunta\",\n      \"cumple\": false\n    }\n  ],\n  \"observaciones\": \"La pregunta requiere ajustes.\",\n  \"resultado\": \"DESFAVORABLE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"una evaluación registrada\", function () {",
+                  "  pm.expect(body.evaluaciones).to.have.lengthOf(1);",
+                  "});",
+                  "",
+                  "pm.test(\"resultadoFinal DESFAVORABLE\", function () {",
+                  "  pm.expect(body.resultadoFinal).to.eql(\"DESFAVORABLE\");",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"rejectedAttempts\", 0);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 Esperar Pregunta RECHAZADA",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{preguntaBaseUrl}}/api/v1/preguntas/{{preguntaRechazoId}}",
+              "host": [
+                "{{preguntaBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "preguntas",
+                "{{preguntaRechazoId}}"
+              ]
+            },
+            "description": "Consulta la pregunta hasta observar el estado RECHAZADA."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const MAX_ATTEMPTS = 20;",
+                  "const DELAY_MS = 500;",
+                  "",
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "const preguntaRechazoId = pm.collectionVariables.get(\"preguntaRechazoId\");",
+                  "const encontrada = body.estado === \"RECHAZADA\";",
+                  "",
+                  "const intentosPrevios = Number(pm.collectionVariables.get(\"rejectedAttempts\")) || 0;",
+                  "const intentoActual = intentosPrevios + 1;",
+                  "",
+                  "pm.test(\"pregunta converge a RECHAZADA (con reintento acotado)\", function () {",
+                  "  if (encontrada) { return; }",
+                  "  if (intentoActual >= MAX_ATTEMPTS) {",
+                  "    pm.expect.fail(\"No se alcanzó la condición esperada tras \" + MAX_ATTEMPTS + \" ejecuciones de esta solicitud.\");",
+                  "  }",
+                  "});",
+                  "",
+                  "if (encontrada) {",
+                  "  pm.collectionVariables.unset(\"rejectedAttempts\");",
+                  "  pm.test(\"preguntaId coincide\", function () { pm.expect(body.preguntaId).to.eql(preguntaRechazoId); });",
+                  "  pm.test(\"numeroVersionRevision sigue 1\", function () { pm.expect(body.numeroVersionRevision).to.eql(1); });",
+                  "} else if (intentoActual < MAX_ATTEMPTS) {",
+                  "  pm.collectionVariables.set(\"rejectedAttempts\", intentoActual);",
+                  "  setTimeout(function () {",
+                  "    pm.execution.setNextRequest(pm.info.requestName);",
+                  "  }, DELAY_MS);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09 Reabrir para corrección",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{preguntaBaseUrl}}/api/v1/preguntas/{{preguntaRechazoId}}/reaperturas",
+              "host": [
+                "{{preguntaBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "preguntas",
+                "{{preguntaRechazoId}}",
+                "reaperturas"
+              ]
+            },
+            "description": "Reabre la pregunta rechazada para permitir su corrección sin incrementar la versión de revisión."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"estado BORRADOR\", function () {",
+                  "  pm.expect(body.estado).to.eql(\"BORRADOR\");",
+                  "});",
+                  "",
+                  "pm.test(\"numeroVersionRevision sigue 1\", function () {",
+                  "  pm.expect(body.numeroVersionRevision).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10 Verificar BORRADOR conserva versión 1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{preguntaBaseUrl}}/api/v1/preguntas/{{preguntaRechazoId}}",
+              "host": [
+                "{{preguntaBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "preguntas",
+                "{{preguntaRechazoId}}"
+              ]
+            },
+            "description": "Verifica que la pregunta reabierta esté en BORRADOR y conserve la versión de revisión 1."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"estado BORRADOR\", function () {",
+                  "  pm.expect(body.estado).to.eql(\"BORRADOR\");",
+                  "});",
+                  "",
+                  "pm.test(\"numeroVersionRevision sigue 1\", function () {",
+                  "  pm.expect(body.numeroVersionRevision).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Errores representativos",
+      "description": "Verifica respuestas representativas ante un identificador inválido, un recurso inexistente y una transición de estado no permitida.",
+      "item": [
+        {
+          "name": "01 UUID inválido",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{preguntaBaseUrl}}/api/v1/preguntas/no-es-un-uuid",
+              "host": [
+                "{{preguntaBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "preguntas",
+                "no-es-un-uuid"
+              ]
+            },
+            "description": "Verifica que un identificador con formato UUID inválido responda 400 Bad Request."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 400\", function () { pm.response.to.have.status(400); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"código de error es VALIDATION_ERROR\", function () {",
+                  "  pm.expect(body.code).to.eql(\"VALIDATION_ERROR\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 Pregunta inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{preguntaBaseUrl}}/api/v1/preguntas/11111111-1111-4111-8111-111111111111",
+              "host": [
+                "{{preguntaBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "preguntas",
+                "11111111-1111-4111-8111-111111111111"
+              ]
+            },
+            "description": "Verifica que una pregunta inexistente identificada mediante un UUID válido responda 404 Not Found."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 404\", function () { pm.response.to.have.status(404); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"código de error es PREGUNTA_NO_ENCONTRADA\", function () {",
+                  "  pm.expect(body.code).to.eql(\"PREGUNTA_NO_ENCONTRADA\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 Actualizar fuera de BORRADOR",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{preguntaBaseUrl}}/api/v1/preguntas/{{preguntaId}}",
+              "host": [
+                "{{preguntaBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "preguntas",
+                "{{preguntaId}}"
+              ]
+            },
+            "description": "Verifica que una pregunta APROBADA no pueda modificarse y responda 409 Conflict.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contexto\": \"Una institución evalúa la arquitectura de una aplicación distribuida, con énfasis en los mecanismos de comunicación entre sus servicios.\",\n  \"preguntaDirecta\": \"¿Cuál alternativa describe una comunicación síncrona entre microservicios?\",\n  \"opciones\": [\n    {\n      \"texto\": \"Un servicio invoca gRPC y espera la respuesta del otro servicio.\",\n      \"correcta\": true\n    },\n    {\n      \"texto\": \"Un servicio publica un evento y continúa sin esperar al consumidor.\",\n      \"correcta\": false\n    },\n    {\n      \"texto\": \"Dos servicios escriben directamente en la misma base de datos.\",\n      \"correcta\": false\n    },\n    {\n      \"texto\": \"Un consumidor procesa un mensaje de una cola sin responder al productor.\",\n      \"correcta\": false\n    },\n    {\n      \"texto\": \"Un servicio almacena un evento en su Outbox local.\",\n      \"correcta\": false\n    }\n  ],\n  \"justificacion\": \"En una comunicación síncrona el emisor espera una respuesta; gRPC permite ese patrón.\",\n  \"bibliografia\": \"Material del curso de Arquitectura de Microservicios (actualizado tras revisión editorial).\",\n  \"competencia\": \"Diseño de software\",\n  \"tema\": \"Microservicios\",\n  \"subtema\": \"Comunicación entre microservicios\",\n  \"nivelDificultad\": \"MEDIO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 409\", function () { pm.response.to.have.status(409); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"código de error es PREGUNTA_ESTADO_INVALIDO\", function () {",
+                  "  pm.expect(body.code).to.eql(\"PREGUNTA_ESTADO_INVALIDO\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "preguntaId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "revisionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "preguntaRechazoId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "revisionRechazoId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "pendingFavorableAttempts",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "approvedAttempts",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "pendingRechazoAttempts",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "rejectedAttempts",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
