@@ -68,4 +68,11 @@ public class OutboxEventJpaEntity {
     public Instant getPublishedAt() {
         return publishedAt;
     }
+
+    public void marcarPublicado(Instant publishedAt) {
+        if (publishedAt == null) {
+            throw new IllegalArgumentException("publishedAt no puede ser null");
+        }
+        this.publishedAt = publishedAt;
+    }
 }

@@ -1,5 +1,6 @@
 package co.edu.unicauca.saberpro.pregunta;
 
+import co.edu.unicauca.saberpro.pregunta.infrastructure.persistence.jpa.outbox.OutboxEventJpaRepository;
 import co.edu.unicauca.saberpro.pregunta.infrastructure.persistence.jpa.pregunta.PreguntaJpaRepository;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,11 @@ class PreguntaServiceApplicationTests {
         @Bean
         EntityManager entityManager() {
             return mock(EntityManager.class);
+        }
+
+        @Bean
+        OutboxEventJpaRepository outboxEventJpaRepository() {
+            return mock(OutboxEventJpaRepository.class);
         }
     }
 }
