@@ -4,6 +4,7 @@ import co.edu.unicauca.saberpro.pregunta.application.command.ProcesarRevisionFin
 import co.edu.unicauca.saberpro.pregunta.application.port.in.ProcesarRevisionFinalizadaUseCase;
 import com.rabbitmq.client.Channel;
 import org.springframework.amqp.core.Message;
+import org.springframework.stereotype.Component;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -16,6 +17,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+@Component
 public class RevisionFinalizadaConsumer {
 
     private static final String EVENT_TYPE = "RevisionFinalizada";

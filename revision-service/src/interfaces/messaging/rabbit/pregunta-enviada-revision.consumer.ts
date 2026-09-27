@@ -2,6 +2,7 @@ import { Channel, ConsumeMessage } from 'amqplib';
 import { isRFC3339, isUUID } from 'class-validator';
 import { RegistrarPreguntaEnviadaRevisionCommand } from '../../../application/command/registrar-pregunta-enviada-revision.command';
 import { RegistrarPreguntaEnviadaRevisionUseCase } from '../../../application/use-case/registrar-pregunta-enviada-revision.use-case';
+import { MensajePreguntaEnviadaRevisionInvalidoError } from './mensaje-pregunta-enviada-revision-invalido.error';
 
 const EVENT_TYPE = 'PreguntaEnviadaARevision';
 const CAMPOS_PERMITIDOS: readonly string[] = [
@@ -71,11 +72,13 @@ export class PreguntaEnviadaRevisionConsumer {
     try {
       contenido = JSON.parse(mensaje.content.toString('utf-8'));
     } catch {
-      throw new Error('mensaje Rabbit con JSON inválido para PreguntaEnviadaARevision');
+      throw new MensajePreguntaEnviadaRevisionInvalidoError(
+        'mensaje Rabbit con JSON inválido para PreguntaEnviadaARevision',
+      );
     }
 
     if (!esWireMessageValido(contenido)) {
-      throw new Error(
+      throw new MensajePreguntaEnviadaRevisionInvalidoError(
         'mensaje Rabbit no cumple el Published Language de PreguntaEnviadaARevision',
       );
     }

@@ -1,6 +1,7 @@
 import { Channel, ConsumeMessage } from 'amqplib';
 import { RegistrarPreguntaEnviadaRevisionUseCase } from '../../../application/use-case/registrar-pregunta-enviada-revision.use-case';
 import { FakePreguntaRevisionSolicitadaStore } from '../../../test/fakes/fake-pregunta-revision-solicitada.store';
+import { MensajePreguntaEnviadaRevisionInvalidoError } from './mensaje-pregunta-enviada-revision-invalido.error';
 import { PreguntaEnviadaRevisionConsumer } from './pregunta-enviada-revision.consumer';
 
 const PREGUNTA_ID = '7d444840-9dc0-11d1-b245-5ffdce74fad2';
@@ -315,5 +316,47 @@ describe('PreguntaEnviadaRevisionConsumer', () => {
 
     expect(useCase.execute).not.toHaveBeenCalled();
     expect(channel.ack).not.toHaveBeenCalled();
+  });
+
+  describe('clasificación de mensaje permanentemente inválido', () => {
+    it('JSON inválido lanza específicamente MensajePreguntaEnviadaRevisionInvalidoError', async () => {
+      const useCase = crearUseCaseMock();
+      const channel = crearChannelMock();
+      const consumer = new PreguntaEnviadaRevisionConsumer(
+        channel as unknown as Channel,
+        useCase as unknown as RegistrarPreguntaEnviadaRevisionUseCase,
+      );
+
+      await expect(
+        consumer.handle(mensajeConTexto('{esto no es json')),
+      ).rejects.toBeInstanceOf(MensajePreguntaEnviadaRevisionInvalidoError);
+    });
+
+    it('Published Language inválido lanza específicamente MensajePreguntaEnviadaRevisionInvalidoError', async () => {
+      const useCase = crearUseCaseMock();
+      const channel = crearChannelMock();
+      const consumer = new PreguntaEnviadaRevisionConsumer(
+        channel as unknown as Channel,
+        useCase as unknown as RegistrarPreguntaEnviadaRevisionUseCase,
+      );
+
+      await expect(
+        consumer.handle(mensajeConPayload(payloadValido({ eventType: 'OtroEvento' }))),
+      ).rejects.toBeInstanceOf(MensajePreguntaEnviadaRevisionInvalidoError);
+    });
+
+    it('un fallo del Use Case NO se clasifica como MensajePreguntaEnviadaRevisionInvalidoError', async () => {
+      const errorUseCase = new Error('fallo técnico de persistencia');
+      const useCase = { execute: jest.fn().mockRejectedValue(errorUseCase) };
+      const channel = crearChannelMock();
+      const consumer = new PreguntaEnviadaRevisionConsumer(
+        channel as unknown as Channel,
+        useCase as unknown as RegistrarPreguntaEnviadaRevisionUseCase,
+      );
+
+      await expect(
+        consumer.handle(mensajeConPayload(payloadValido())),
+      ).rejects.not.toBeInstanceOf(MensajePreguntaEnviadaRevisionInvalidoError);
+    });
   });
 });

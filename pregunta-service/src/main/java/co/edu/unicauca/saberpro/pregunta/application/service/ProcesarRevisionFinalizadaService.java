@@ -5,7 +5,9 @@ import co.edu.unicauca.saberpro.pregunta.application.exception.PreguntaNoEncontr
 import co.edu.unicauca.saberpro.pregunta.application.port.in.ProcesarRevisionFinalizadaUseCase;
 import co.edu.unicauca.saberpro.pregunta.domain.model.Pregunta;
 import co.edu.unicauca.saberpro.pregunta.domain.repository.PreguntaRepository;
+import org.springframework.stereotype.Service;
 
+@Service
 public class ProcesarRevisionFinalizadaService implements ProcesarRevisionFinalizadaUseCase {
 
     private final PreguntaRepository repository;

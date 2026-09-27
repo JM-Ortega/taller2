@@ -14,7 +14,12 @@ import org.springframework.context.annotation.Bean;
 
 import static org.mockito.Mockito.mock;
 
-@SpringBootTest(properties = "spring.grpc.server.port=0")
+@SpringBootTest(properties = {
+    "spring.grpc.server.port=0",
+    "spring.rabbitmq.dynamic=false",
+    "spring.rabbitmq.listener.simple.auto-startup=false",
+    "pregunta.outbox.scheduler.enabled=false"
+})
 @EnableAutoConfiguration(exclude = {
     DataSourceAutoConfiguration.class,
     HibernateJpaAutoConfiguration.class,
