@@ -9,6 +9,8 @@ import { CrearRevisionUseCase } from '../../application/use-case/crear-revision.
 import { ListarRevisionesPreguntaUseCase } from '../../application/use-case/listar-revisiones-pregunta.use-case';
 import { ObtenerRevisionUseCase } from '../../application/use-case/obtener-revision.use-case';
 import { RegistrarEvaluacionUseCase } from '../../application/use-case/registrar-evaluacion.use-case';
+import { IntegracionPreguntaInconsistenteException } from '../../application/exception/integracion-pregunta-inconsistente.exception';
+import { ServicioPreguntaNoDisponibleException } from '../../application/exception/servicio-pregunta-no-disponible.exception';
 import { AutorIncluidoComoRevisorException } from '../../domain/exception/autor-incluido-como-revisor.exception';
 import { RevisionYaFinalizadaException } from '../../domain/exception/revision-ya-finalizada.exception';
 import { RevisorNoAsignadoException } from '../../domain/exception/revisor-no-asignado.exception';
@@ -140,6 +142,34 @@ describe('RevisionController', () => {
         .expect(409);
 
       expect(response.body.code).toBe('AUTOR_INCLUIDO_COMO_REVISOR');
+    });
+
+    it('integración con Pregunta inconsistente retorna 502', async () => {
+      crearRevisionUseCase.execute.mockRejectedValue(
+        new IntegracionPreguntaInconsistenteException(
+          'el snapshot recibido no corresponde a la pregunta/version solicitada',
+        ),
+      );
+
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/revisiones')
+        .send({ preguntaId, revisorIds: ['revisor-1'] })
+        .expect(502);
+
+      expect(response.body.code).toBe('PREGUNTA_GRPC_INCONSISTENTE');
+    });
+
+    it('servicio de Pregunta no disponible retorna 503', async () => {
+      crearRevisionUseCase.execute.mockRejectedValue(
+        new ServicioPreguntaNoDisponibleException('el servicio de Pregunta no está disponible'),
+      );
+
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/revisiones')
+        .send({ preguntaId, revisorIds: ['revisor-1'] })
+        .expect(503);
+
+      expect(response.body.code).toBe('PREGUNTA_GRPC_NO_DISPONIBLE');
     });
   });
 

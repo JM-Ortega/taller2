@@ -1,6 +1,8 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
+import { IntegracionPreguntaInconsistenteException } from '../../application/exception/integracion-pregunta-inconsistente.exception';
 import { PreguntaNoDisponibleParaRevisionException } from '../../application/exception/pregunta-no-disponible-para-revision.exception';
 import { RevisionNoEncontradaException } from '../../application/exception/revision-no-encontrada.exception';
+import { ServicioPreguntaNoDisponibleException } from '../../application/exception/servicio-pregunta-no-disponible.exception';
 import { AutorIncluidoComoRevisorException } from '../../domain/exception/autor-incluido-como-revisor.exception';
 import { RevisionYaFinalizadaException } from '../../domain/exception/revision-ya-finalizada.exception';
 import { RevisorNoAsignadoException } from '../../domain/exception/revisor-no-asignado.exception';
@@ -51,6 +53,16 @@ export class ApiExceptionFilter implements ExceptionFilter {
     }
     if (exception instanceof RevisoresInvalidosException) {
       return this.error(HttpStatus.BAD_REQUEST, 'VALIDATION_ERROR', MENSAJE_VALIDACION);
+    }
+    if (exception instanceof IntegracionPreguntaInconsistenteException) {
+      return this.error(HttpStatus.BAD_GATEWAY, 'PREGUNTA_GRPC_INCONSISTENTE', exception.message);
+    }
+    if (exception instanceof ServicioPreguntaNoDisponibleException) {
+      return this.error(
+        HttpStatus.SERVICE_UNAVAILABLE,
+        'PREGUNTA_GRPC_NO_DISPONIBLE',
+        exception.message,
+      );
     }
     if (exception instanceof HttpException) {
       return this.resolverHttpException(exception);

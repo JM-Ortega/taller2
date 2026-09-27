@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Bean;
 
 import static org.mockito.Mockito.mock;
 
-@SpringBootTest
+@SpringBootTest(properties = "spring.grpc.server.port=0")
 @EnableAutoConfiguration(exclude = {
     DataSourceAutoConfiguration.class,
     HibernateJpaAutoConfiguration.class,
