@@ -8,9 +8,11 @@ import co.edu.unicauca.saberpro.pregunta.domain.model.Pregunta;
 import co.edu.unicauca.saberpro.pregunta.domain.model.Subtema;
 import co.edu.unicauca.saberpro.pregunta.domain.model.Tema;
 import co.edu.unicauca.saberpro.pregunta.domain.repository.PreguntaRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+@Service
 public class CrearPreguntaService implements CrearPreguntaUseCase {
 
     private final PreguntaRepository repository;

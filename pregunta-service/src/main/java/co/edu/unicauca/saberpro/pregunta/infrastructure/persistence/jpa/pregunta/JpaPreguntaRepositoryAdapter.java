@@ -2,10 +2,12 @@ package co.edu.unicauca.saberpro.pregunta.infrastructure.persistence.jpa.pregunt
 
 import co.edu.unicauca.saberpro.pregunta.domain.model.Pregunta;
 import co.edu.unicauca.saberpro.pregunta.domain.repository.PreguntaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 import java.util.UUID;
 
+@Repository
 public class JpaPreguntaRepositoryAdapter implements PreguntaRepository {
 
     private final PreguntaJpaRepository jpaRepository;

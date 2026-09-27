@@ -3,11 +3,13 @@ package co.edu.unicauca.saberpro.pregunta.infrastructure.persistence.jpa.outbox;
 import co.edu.unicauca.saberpro.pregunta.application.port.out.IntegrationEventPublisher;
 import co.edu.unicauca.saberpro.pregunta.domain.event.PreguntaEnviadaARevision;
 import jakarta.persistence.EntityManager;
+import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
+@Component
 public class JpaOutboxIntegrationEventPublisher implements IntegrationEventPublisher {
 
     private static final String EVENT_TYPE = "PreguntaEnviadaARevision";

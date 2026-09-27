@@ -9,10 +9,12 @@ import co.edu.unicauca.saberpro.pregunta.domain.model.Subtema;
 import co.edu.unicauca.saberpro.pregunta.domain.model.Tema;
 import co.edu.unicauca.saberpro.pregunta.infrastructure.persistence.jpa.pregunta.entity.OpcionRespuestaJpaEmbeddable;
 import co.edu.unicauca.saberpro.pregunta.infrastructure.persistence.jpa.pregunta.entity.PreguntaJpaEntity;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Component
 public class PreguntaPersistenceMapper {
 
     public PreguntaJpaEntity toJpaEntity(Pregunta pregunta) {

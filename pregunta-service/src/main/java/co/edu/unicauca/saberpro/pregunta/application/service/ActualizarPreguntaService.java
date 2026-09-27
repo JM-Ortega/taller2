@@ -9,7 +9,9 @@ import co.edu.unicauca.saberpro.pregunta.domain.model.Pregunta;
 import co.edu.unicauca.saberpro.pregunta.domain.model.Subtema;
 import co.edu.unicauca.saberpro.pregunta.domain.model.Tema;
 import co.edu.unicauca.saberpro.pregunta.domain.repository.PreguntaRepository;
+import org.springframework.stereotype.Service;
 
+@Service
 public class ActualizarPreguntaService implements ActualizarPreguntaUseCase {
 
     private final PreguntaRepository repository;

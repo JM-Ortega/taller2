@@ -6,11 +6,13 @@ import co.edu.unicauca.saberpro.pregunta.application.port.out.IntegrationEventPu
 import co.edu.unicauca.saberpro.pregunta.domain.event.PreguntaEnviadaARevision;
 import co.edu.unicauca.saberpro.pregunta.domain.model.Pregunta;
 import co.edu.unicauca.saberpro.pregunta.domain.repository.PreguntaRepository;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.UUID;
 
+@Service
 public class EnviarPreguntaARevisionService implements EnviarPreguntaARevisionUseCase {
 
     private final PreguntaRepository repository;

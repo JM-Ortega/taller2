@@ -4,9 +4,11 @@ import co.edu.unicauca.saberpro.pregunta.application.exception.PreguntaNoEncontr
 import co.edu.unicauca.saberpro.pregunta.application.port.in.ReabrirPreguntaParaCorreccionUseCase;
 import co.edu.unicauca.saberpro.pregunta.domain.model.Pregunta;
 import co.edu.unicauca.saberpro.pregunta.domain.repository.PreguntaRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+@Service
 public class ReabrirPreguntaParaCorreccionService implements ReabrirPreguntaParaCorreccionUseCase {
 
     private final PreguntaRepository repository;
